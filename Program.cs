@@ -1,25 +1,29 @@
-﻿using System;
+﻿using Iot.Device.ServoMotor;
+using System;
+using System.Device.Pwm;
 
-namespace MyApp // Note: actual namespace depends on the project name.
+namespace Solartracker
 {
     internal class Program
     {
         static void Main(string[] args)
         {
-            ServoMotor servoMotor = new ServoMotor(
-            PwmChannel.Create(0, 0, 50),
-            180,
-            900,
-            2100);
+            Console.WriteLine("--- TEST 1 ---");
 
-            servoMotor.Start();  // Enable control signal.
+            var pwm = PwmChannel.Create(0, 1, 50);
 
-            // Move position.
-            servoMotor.WriteAngle(0); // ~0.9ms; Approximately 0 degrees.
-            servoMotor.WritePulseWidth(90); // ~1.5ms; Approximately 90 degrees.
-            servoMotor.WritePulseWidth(180); // ~2.1ms; Approximately 180 degrees.
+            pwm.DutyCycle = 0.01;
 
-            servoMotor.Stop(); // Disable control signal.
+            Angle(pwm, 50);
+
+        }
+
+        internal static void Angle(PwmChannel pwm, int angle)
+        {
+            //360° = 1050ms
+            pwm.Start();
+            Thread.Sleep();
+            pwm.Stop();
         }
     }
 }
