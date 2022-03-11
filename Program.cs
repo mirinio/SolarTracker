@@ -1,4 +1,5 @@
 ﻿using Iot.Device.ServoMotor;
+using Iot.Device.Uln2003;
 using System;
 using System.Device.Pwm;
 
@@ -9,15 +10,10 @@ namespace Solartracker
     {
         static void Main(string[] args)
         {
-            //Console.WriteLine("--- TEST 1 ---");
+            Console.WriteLine("--- Solartracker ---");
 
-            //var pwm = PwmChannel.Create(0, 1, 50);
-
-            //BrokenServo top = new BrokenServo("Top", pwm);
-            //BrokenServo bottom = new BrokenServo("Top", pwm);
-            //Solartracker tracker = new Solartracker(top);
-            //tracker.RunManual();
-
+            Solartracker tracker = new Solartracker();
+            tracker.RunGPS();
         }
     }
 }
