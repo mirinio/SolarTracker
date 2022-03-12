@@ -14,11 +14,15 @@ namespace Solartracker
         private const int greenPin = 18;
         private const int bluePin = 23;
 
-        public int ElevationAngle;
-        public int AzimutAngle;
+        public int ElevationAngle { get; private set; }
+        public int AzimutAngle { get; private set; }
 
 
-        public Solartracker() {}
+        public Solartracker() 
+        {
+            ElevationAngle = 0;
+            AzimutAngle = 0;
+        }
 
         public void RunManual()
         {
@@ -56,7 +60,7 @@ namespace Solartracker
                             break;
                         case ConsoleKey.DownArrow:
                             Console.WriteLine("--DOWN--");
-                            ElevationAngle = MoveAngle(elevationMotor, ElevationAngle, ElevationAngle - 1);
+                            ElevationAngle = MoveAngle(elevationMotor, ElevationAngle, ElevationAngle - 1, isClockwise: false);
                             break;
                         default:
                             Console.WriteLine("Use Arrow keys, hit Backspace to stop");
@@ -87,9 +91,9 @@ namespace Solartracker
                         elevationMotor.Stop();
                     }
 
-                    ElevationAngle = SetAngle(elevationMotor, 0, 45);
+                    ElevationAngle = SetAngle(elevationMotor, ElevationAngle, 90);
                     Thread.Sleep(2000);
-                    //ElevationAngle = SetAngle(elevationMotor, 45, 90);
+                    ElevationAngle = SetAngle(elevationMotor, ElevationAngle, 180);
                     //Thread.Sleep(2000);
                     //ElevationAngle = SetAngle(elevationMotor, 90, 180);
                     //Thread.Sleep(2000);
@@ -108,48 +112,69 @@ namespace Solartracker
         }
 
 
-        private int MoveAngle(Uln2003 motor, int currentAngle, int angle)
+        private int MoveAngle(Uln2003 motor, int currentAngle, int angle, bool isClockwise = true)
         {
             if (IsOutOfRadius(angle))
             {
                 return currentAngle;
             }
-
-            if (angle < currentAngle)
+            else if (currentAngle == 0)
             {
-                int turnSteps = (2048 * angle) / 360;
-                motor.Step(-turnSteps);
+                int turnStep = (2048 * angle) / 360;
+                motor.Step(turnStep);
+
+                return angle;
             }
-            else if (angle > currentAngle)
+            else if (angle == 0)
+            {
+                int turnStep = (2048 * currentAngle) / 360;
+                motor.Step(-turnStep);
+
+                return 0;
+            }
+            else if (isClockwise)
             {
                 int turnSteps = (2048 * angle) / 360;
                 motor.Step(turnSteps);
+                return angle + currentAngle;
             }
-
-            return angle;
+            else
+            {
+                int turnSteps = (2048 * angle) / 360;
+                motor.Step(-turnSteps);
+                return currentAngle - angle;
+            }
         }
 
 
         private int SetAngle(Uln2003 motor, int currentAngle, int angle)
         {
-            if (IsOutOfRadius(angle))
+            if (IsOutOfRadius(angle) || currentAngle == angle)
             {
                 return currentAngle;
             }
-
-            if (angle < currentAngle)
+            else if (currentAngle == 0)
+            {
+                int turnStep = (2048 * angle) / 360;
+                motor.Step(turnStep);
+            }
+            else if (angle == 0)
+            {
+                int turnStep = (2048 * currentAngle) / 360;
+                motor.Step(-turnStep);
+            }
+            else if (angle < currentAngle)
             {
                 int currentSteps = (2048 * currentAngle) / 360;
                 int newAngleSteps = (2048 * angle) / 360;
-                int turnStepsBack = currentAngle - newAngleSteps;
-
+                int turnStepsBack = currentSteps - newAngleSteps;
                 motor.Step(-turnStepsBack);
             }
             else if (angle > currentAngle)
             {
                 int currentSteps = (2048 * currentAngle) / 360;
                 int newAngleSteps = (2048 * angle) / 360;
-                int turnStepsForward = newAngleSteps - currentAngle;
+                int turnStepsForward = newAngleSteps - currentSteps;
 
                 motor.Step(turnStepsForward);
             }
