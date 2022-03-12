@@ -9,10 +9,18 @@ namespace Solartracker
 {
     internal class Solartracker
     {
-        private const int yellowPin = 14;
-        private const int whitePin = 15;
-        private const int greenPin = 18;
-        private const int bluePin = 23;
+        //Elevation stepper motor pins
+        private const int YELLOW_ELEVATION_PIN = 12;
+        private const int WHITE_ELEVATION_PIN = 16;
+        private const int GREEN_ELEVATION_PIN = 20;
+        private const int BLUE_ELEVATION_PIN = 21;
+
+        //Azimut stepper motor pins
+        private const int YELLOW_AZIMUT_PIN = 5;
+        private const int WHITE_AZIMUT_PIN = 6;
+        private const int GREEN_AZIMUT_PIN = 13;
+        private const int BLUE_AZIMUT_PIN = 19;
+
 
         public int ElevationAngle { get; private set; }
         public int AzimutAngle { get; private set; }
@@ -28,8 +36,11 @@ namespace Solartracker
         {
             bool start = true;
 
-            using (Uln2003 elevationMotor = new Uln2003(yellowPin, whitePin, greenPin, bluePin))
+            using (Uln2003 azimutMotor = new Uln2003(YELLOW_AZIMUT_PIN, WHITE_AZIMUT_PIN, GREEN_AZIMUT_PIN, BLUE_AZIMUT_PIN))
+            using (Uln2003 elevationMotor = new Uln2003(YELLOW_ELEVATION_PIN, WHITE_ELEVATION_PIN, GREEN_ELEVATION_PIN, BLUE_ELEVATION_PIN))
             {
+                azimutMotor.RPM = 15;
+                azimutMotor.Mode = StepperMode.FullStepDualPhase;
                 elevationMotor.RPM = 15;
                 elevationMotor.Mode = StepperMode.FullStepDualPhase;
 
@@ -41,17 +52,18 @@ namespace Solartracker
                     {
                         case ConsoleKey.Backspace:
                             start = false;
+                            azimutMotor.Stop();
                             elevationMotor.Stop();
                             Console.WriteLine("Stop");
                             break;
                         case ConsoleKey.LeftArrow:
-                            //Console.WriteLine("++LEFT++");
-                            //CurrentAngle = Angle(pwm, currentAngle++);
+                            Console.WriteLine("++LEFT++");
+                            AzimutAngle = MoveAngle(azimutMotor, AzimutAngle, AzimutAngle + 10);
                             break;
 
                         case ConsoleKey.RightArrow:
-                            //Console.WriteLine("--RIGHT--");
-                            //CurrentAngle = Angle(pwm, currentAngle--);
+                            Console.WriteLine("--RIGHT--");
+                            AzimutAngle = MoveAngle(azimutMotor, AzimutAngle, AzimutAngle - 10, isClockwise: false);
                             break;
                         case ConsoleKey.UpArrow:
                             Console.WriteLine("++UP++");
@@ -74,43 +86,15 @@ namespace Solartracker
 
         public void RunGPS()
         {
-            bool start = true;
-
-            using (Uln2003 elevationMotor = new Uln2003(yellowPin, whitePin, greenPin, bluePin))
+            using (Uln2003 azimutMotor = new Uln2003(YELLOW_AZIMUT_PIN, WHITE_AZIMUT_PIN, GREEN_AZIMUT_PIN, BLUE_AZIMUT_PIN))
+            using (Uln2003 elevationMotor = new Uln2003(YELLOW_ELEVATION_PIN, WHITE_ELEVATION_PIN, GREEN_ELEVATION_PIN, BLUE_ELEVATION_PIN))
             {
                 elevationMotor.RPM = 15;
                 elevationMotor.Mode = StepperMode.FullStepDualPhase;
 
-                while (start)
-                {
-                    ConsoleKeyInfo keyinfo = Console.ReadKey(true);
-
-                    if (keyinfo.Key == ConsoleKey.Backspace)
-                    {
-                        start = false;
-                        elevationMotor.Stop();
-                    }
-
-                    ElevationAngle = SetAngle(elevationMotor, ElevationAngle, 90);
-                    Thread.Sleep(2000);
-                    ElevationAngle = SetAngle(elevationMotor, ElevationAngle, 180);
-                    //Thread.Sleep(2000);
-                    //ElevationAngle = SetAngle(elevationMotor, 90, 180);
-                    //Thread.Sleep(2000);
-                    //ElevationAngle = SetAngle(elevationMotor, 180, 270);
-                    //Thread.Sleep(2000);
-                    //ElevationAngle = SetAngle(elevationMotor, 270, 360);
-                    //Thread.Sleep(2000);
-                    //ElevationAngle = SetAngle(elevationMotor, 360, 180);
-                    //Thread.Sleep(2000);
-                    //ElevationAngle = SetAngle(elevationMotor, 180, 135);
-                    //Thread.Sleep(2000);
-                    //ElevationAngle = SetAngle(elevationMotor, 135, 0);
-
-                }
+                //PARAMS RT, DATUM, ZEIT, Längengrad, Breitengrad                
             }
         }
-
 
         private int MoveAngle(Uln2003 motor, int currentAngle, int angle, bool isClockwise = true)
         {
