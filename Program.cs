@@ -1,8 +1,4 @@
-﻿using Iot.Device.ServoMotor;
-using Iot.Device.Uln2003;
-using System;
-using System.Device.Pwm;
-
+﻿using Iot.Device.Uln2003;
 
 namespace Solartracker
 {
@@ -13,7 +9,8 @@ namespace Solartracker
             Console.WriteLine("--- Solartracker ---");
 
             Solartracker tracker = new Solartracker();
-            tracker.RunGPS();
+            //tracker.RunGPS();
+            tracker.RunManual();
         }
     }
 }

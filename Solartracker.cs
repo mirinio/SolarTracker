@@ -10,26 +10,27 @@ namespace Solartracker
     internal class Solartracker
     {
         //Elevation stepper motor pins
-        private const int YELLOW_ELEVATION_PIN = 12;
-        private const int WHITE_ELEVATION_PIN = 16;
-        private const int GREEN_ELEVATION_PIN = 20;
-        private const int BLUE_ELEVATION_PIN = 21;
+        private const int YELLOW_ELEVATION_PIN = 12;//grau
+        private const int WHITE_ELEVATION_PIN = 16;//violet
+        private const int GREEN_ELEVATION_PIN = 20;//rot
+        private const int BLUE_ELEVATION_PIN = 21;//violet
 
         //Azimut stepper motor pins
-        private const int YELLOW_AZIMUT_PIN = 5;
-        private const int WHITE_AZIMUT_PIN = 6;
-        private const int GREEN_AZIMUT_PIN = 13;
-        private const int BLUE_AZIMUT_PIN = 19;
+        private const int YELLOW_AZIMUT_PIN = 5;//grüen
+        private const int WHITE_AZIMUT_PIN = 6;//brun
+        private const int GREEN_AZIMUT_PIN = 13;//gelb
+        private const int BLUE_AZIMUT_PIN = 19;//blau
 
 
         public int ElevationAngle { get; private set; }
         public int AzimutAngle { get; private set; }
 
-
+        public int Revolution { get; private set; }
         public Solartracker() 
         {
             ElevationAngle = 0;
             AzimutAngle = 0;
+            Revolution = 2048;
         }
 
         public void RunManual()
@@ -39,14 +40,16 @@ namespace Solartracker
             using (Uln2003 azimutMotor = new Uln2003(YELLOW_AZIMUT_PIN, WHITE_AZIMUT_PIN, GREEN_AZIMUT_PIN, BLUE_AZIMUT_PIN))
             using (Uln2003 elevationMotor = new Uln2003(YELLOW_ELEVATION_PIN, WHITE_ELEVATION_PIN, GREEN_ELEVATION_PIN, BLUE_ELEVATION_PIN))
             {
-                azimutMotor.RPM = 15;
+                azimutMotor.RPM = 1;
                 azimutMotor.Mode = StepperMode.FullStepDualPhase;
-                elevationMotor.RPM = 15;
+                elevationMotor.RPM = 1;
                 elevationMotor.Mode = StepperMode.FullStepDualPhase;
 
                 while (start)
                 {
                     ConsoleKeyInfo keyinfo = Console.ReadKey(true);
+                    Console.WriteLine($"Azimut: {AzimutAngle}");
+                    Console.WriteLine($"Elevation: {ElevationAngle}");
 
                     switch (keyinfo.Key)
                     {
@@ -58,21 +61,21 @@ namespace Solartracker
                             break;
                         case ConsoleKey.LeftArrow:
                             Console.WriteLine("++LEFT++");
-                            AzimutAngle = MoveAngle(azimutMotor, AzimutAngle, AzimutAngle + 10);
+                            ElevationAngle = MoveAngle(elevationMotor, ElevationAngle, 45);
                             break;
 
                         case ConsoleKey.RightArrow:
                             Console.WriteLine("--RIGHT--");
-                            AzimutAngle = MoveAngle(azimutMotor, AzimutAngle, AzimutAngle - 10, isClockwise: false);
+                            ElevationAngle = MoveAngle(elevationMotor, ElevationAngle, 45, isClockwise: false);
                             break;
                         case ConsoleKey.UpArrow:
                             Console.WriteLine("++UP++");
-                            ElevationAngle = MoveAngle(elevationMotor, ElevationAngle, ElevationAngle + 1);
-
+                            AzimutAngle = MoveAngle(azimutMotor, AzimutAngle, 45);
                             break;
                         case ConsoleKey.DownArrow:
                             Console.WriteLine("--DOWN--");
-                            ElevationAngle = MoveAngle(elevationMotor, ElevationAngle, ElevationAngle - 1, isClockwise: false);
+                            
+                            AzimutAngle = MoveAngle(azimutMotor, AzimutAngle, 45, isClockwise: false);
                             break;
                         default:
                             Console.WriteLine("Use Arrow keys, hit Backspace to stop");
@@ -89,8 +92,14 @@ namespace Solartracker
             using (Uln2003 azimutMotor = new Uln2003(YELLOW_AZIMUT_PIN, WHITE_AZIMUT_PIN, GREEN_AZIMUT_PIN, BLUE_AZIMUT_PIN))
             using (Uln2003 elevationMotor = new Uln2003(YELLOW_ELEVATION_PIN, WHITE_ELEVATION_PIN, GREEN_ELEVATION_PIN, BLUE_ELEVATION_PIN))
             {
-                elevationMotor.RPM = 15;
+                elevationMotor.RPM = 1;
                 elevationMotor.Mode = StepperMode.FullStepDualPhase;
+
+
+                ElevationAngle = MoveAngle(elevationMotor, ElevationAngle, 90, isClockwise: false);
+                Thread.Sleep(2000);
+                ElevationAngle = MoveAngle(elevationMotor, ElevationAngle, 0, isClockwise: false);
+                
 
                 //PARAMS RT, DATUM, ZEIT, Längengrad, Breitengrad                
             }
@@ -104,27 +113,31 @@ namespace Solartracker
             }
             else if (currentAngle == 0)
             {
-                int turnStep = (2048 * angle) / 360;
+                int turnStep = (Revolution * angle) / 360;
                 motor.Step(turnStep);
 
                 return angle;
             }
             else if (angle == 0)
             {
-                int turnStep = (2048 * currentAngle) / 360;
+                int turnStep = (Revolution * currentAngle) / 360;
                 motor.Step(-turnStep);
 
                 return 0;
             }
             else if (isClockwise)
             {
-                int turnSteps = (2048 * angle) / 360;
+                Console.WriteLine("is clockwise");
+                Console.WriteLine($"Angle: {angle} CurrentAngle: {currentAngle}");
+                int turnSteps = (Revolution * angle) / 360;
                 motor.Step(turnSteps);
                 return angle + currentAngle;
             }
             else
             {
-                int turnSteps = (2048 * angle) / 360;
+                Console.WriteLine("is counter clockwise");
+                Console.WriteLine($"Angle: {angle} CurrentAngle: {currentAngle}");
+                int turnSteps = (Revolution * angle) / 360;
                 motor.Step(-turnSteps);
                 return currentAngle - angle;
             }
@@ -168,7 +181,7 @@ namespace Solartracker
 
         private bool IsOutOfRadius(int angle)
         {
-            return (angle < 0 || angle > 360);
+            return (angle < 0 || angle> 360);
         }
     }
 }
