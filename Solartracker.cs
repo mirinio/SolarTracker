@@ -89,6 +89,27 @@ namespace Solartracker
 
         public void RunGPS()
         {
+            //Breitengrad Rho dezimal
+            //Längengrad lambda dezimal
+            //Deklinationswinkel Delta = a - b - c
+            //a = 0.3948 -23.2559 * cos(J' + 9.1)
+            //b = 0.3915 * cos(2*J' + 5.4)
+            //c = 0.1764 * cos(3*J'+26)
+            //J' = 360 * Tage des Jahres/Anzahl Tage im Jahr = Jahreswinkel
+            //StundenWinkel Omega 
+            //w = (12h - WOZ)* 15/h
+            //wahre ortszeit WOZ = LZ -Zeitzone + [4* lambda]min + Zgl
+            //Zgl Zeitgleichung = a + b + c nicht verwechseln mit deklinationswinkel
+            //a = [0.0066+7.3525*cos(J'+85.9)]
+            //b = [9.9359 * cos(2*J'+108.9)]
+            //c = [0.3387*cos(3*J'+105.2]
+            //Elevation
+            //lambda_Sonne = arcsin(cos w * cos rho * cos delta + sin rho * sin delta)
+            //Azimut
+            // vormittag
+            //alpha_sonne = 180 - arccos((sin y_s * sin rho - sin rho )/cos y_s * cos rho)
+            //nachmittag
+            //alpha_sonne = 180 + arccos((sin y_s * sin rho - sin rho )/cos y_s * cos rho)
             using (Uln2003 azimutMotor = new Uln2003(YELLOW_AZIMUT_PIN, WHITE_AZIMUT_PIN, GREEN_AZIMUT_PIN, BLUE_AZIMUT_PIN))
             using (Uln2003 elevationMotor = new Uln2003(YELLOW_ELEVATION_PIN, WHITE_ELEVATION_PIN, GREEN_ELEVATION_PIN, BLUE_ELEVATION_PIN))
             {
