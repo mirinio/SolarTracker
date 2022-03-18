@@ -11,16 +11,16 @@ namespace Solartracker
     internal class Solartracker
     {
         //Elevation stepper motor pins
-        private const int YELLOW_ELEVATION_PIN = 12;//grau
-        private const int WHITE_ELEVATION_PIN = 16;//violet
-        private const int GREEN_ELEVATION_PIN = 20;//rot
-        private const int BLUE_ELEVATION_PIN = 21;//violet
+        private const int YELLOW_AZIMUT_PIN = 12;//grau
+        private const int WHITE_AZIMUT_PIN = 16;//violet
+        private const int GREEN_AZIMUT_PIN = 20;//rot
+        private const int BLUE_AZIMUT_PIN = 21;//violet
 
         //Azimut stepper motor pins
-        private const int YELLOW_AZIMUT_PIN = 5;//grüen
-        private const int WHITE_AZIMUT_PIN = 6;//brun
-        private const int GREEN_AZIMUT_PIN = 13;//gelb
-        private const int BLUE_AZIMUT_PIN = 19;//blau
+        private const int YELLOW_ELEVATION_PIN = 5;//grüen
+        private const int WHITE_ELEVATION_PIN = 6;//brun
+        private const int GREEN_ELEVATION_PIN = 13;//gelb
+        private const int BLUE_ELEVATION_PIN = 19;//blau
 
 
         public int ElevationAngle { get; private set; }
@@ -68,21 +68,21 @@ namespace Solartracker
                             break;
                         case ConsoleKey.LeftArrow:
                             Console.WriteLine("++LEFT++");
-                            ElevationAngle = MoveAngle(elevationMotor, ElevationAngle, MoveAngleSteps);
+                            AzimutAngle = MoveAngle(azimutMotor, AzimutAngle, MoveAngleSteps);
                             break;
 
                         case ConsoleKey.RightArrow:
                             Console.WriteLine("--RIGHT--");
-                            ElevationAngle = MoveAngle(elevationMotor, ElevationAngle, MoveAngleSteps, isClockwise: false);
+                            AzimutAngle = MoveAngle(azimutMotor, AzimutAngle, MoveAngleSteps, isClockwise: false);
                             break;
                         case ConsoleKey.UpArrow:
                             Console.WriteLine("++UP++");
-                            AzimutAngle = MoveAngle(azimutMotor, AzimutAngle, MoveAngleSteps);
+                            ElevationAngle = MoveAngle(elevationMotor, ElevationAngle, MoveAngleSteps);
+                            
                             break;
                         case ConsoleKey.DownArrow:
                             Console.WriteLine("--DOWN--");
-                            
-                            AzimutAngle = MoveAngle(azimutMotor, AzimutAngle, MoveAngleSteps, isClockwise: false);
+                            ElevationAngle = MoveAngle(elevationMotor, ElevationAngle, MoveAngleSteps, isClockwise: false);
                             break;
                         default:
                             Console.WriteLine("Use Arrow keys, hit Backspace to stop");
