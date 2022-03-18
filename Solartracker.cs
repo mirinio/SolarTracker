@@ -111,9 +111,10 @@ namespace Solartracker
                 //Längengrad lambda dezimal Züri
                 double longitude = 8.541694;
 
-                SolarTimes solarTimes = new SolarTimes(DateTime.Now, latitude, longitude);
-                ElevationAngle = SetAngle(elevationMotor,ElevationAngle, solarTimes.SolarElevation.Degrees);
+                SolarTimes solarTimes = new SolarTimes(DateTime.Now.AddHours(-12), latitude, longitude);
+
                 AzimutAngle = SetAngle(azimutMotor, AzimutAngle, solarTimes.SolarAzimuth.Degrees);
+                ElevationAngle = SetAngle(elevationMotor,ElevationAngle, solarTimes.SolarElevation.Degrees);
                 //PARAMS RT, DATUM, ZEIT, Längengrad, Breitengrad                
             }
         }
