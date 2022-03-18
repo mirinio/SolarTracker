@@ -156,6 +156,9 @@ namespace Solartracker
 
         private int SetAngle(Uln2003 motor, int currentAngle, int angle)
         {
+            int currentSteps = (Revolution * currentAngle) / 360;
+            int newAngleSteps = (Revolution * angle) / 360;
+
             if (IsOutOfRadius(angle) || currentAngle == angle)
             {
                 return currentAngle;
@@ -172,17 +175,12 @@ namespace Solartracker
             }
             else if (angle < currentAngle)
             {
-                int currentSteps = (Revolution * currentAngle) / 360;
-                int newAngleSteps = (Revolution * angle) / 360;
                 int turnStepsBack = currentSteps - newAngleSteps;
                 motor.Step(-turnStepsBack);
             }
             else if (angle > currentAngle)
             {
-                int currentSteps = (Revolution * currentAngle) / 360;
-                int newAngleSteps = (Revolution * angle) / 360;
                 int turnStepsForward = newAngleSteps - currentSteps;
-
                 motor.Step(turnStepsForward);
             }
 
