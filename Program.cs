@@ -43,7 +43,6 @@ namespace Solartracker
                 StringBuilder builder = new StringBuilder();
                 builder.AppendLine("Start Default");
                 builder.AppendLine("starting GPS tracking...");
-                tracker.RunGPS();
 
                 builder.AppendLine("--Solartracker Parameters--");
                 builder.AppendLine("dotnet Solartracker.dll [manual] => start Manual tracking");
@@ -51,6 +50,8 @@ namespace Solartracker
                 builder.AppendLine("dotnet Solartracker.dll [gpsdemo] => start GPS tracking");
 
                 Console.WriteLine(builder.ToString());
+
+                tracker.RunGPS();
             }
         }
     }
