@@ -179,6 +179,8 @@ namespace Solartracker
                 elevationMotor.Mode = MotorStepperMode;
 
                 SolarTimes solarTimes = new SolarTimes(time, latitute, longitude);
+                Console.WriteLine($"Elevation: {solarTimes.SolarElevation.Degrees}°");
+                Console.WriteLine($"Azimuth: {solarTimes.SolarAzimuth.Degrees}°");
                 AzimutAngle = SetAngle(azimutMotor, AzimutAngle, solarTimes.SolarAzimuth.Degrees);
                 ElevationAngle = SetAngle(elevationMotor, ElevationAngle, solarTimes.SolarElevation.Degrees);
 
