@@ -1,7 +1,10 @@
 ﻿using Innovative.SolarCalculator;
+using Iot.Device.Nmea0183;
+using Iot.Device.Nmea0183.Sentences;
 using Iot.Device.Uln2003;
 using System;
 using System.Collections.Generic;
+using System.IO.Ports;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -10,17 +13,17 @@ namespace Solartracker
 {
     internal class Solartracker
     {
-        //Elevation stepper motor pins
-        private const int YELLOW_AZIMUT_PIN = 12;//grau
-        private const int WHITE_AZIMUT_PIN = 16;//violet
-        private const int GREEN_AZIMUT_PIN = 20;//rot
-        private const int BLUE_AZIMUT_PIN = 21;//violet
+        //Elevation stepper motor pins        Kabel
+        private const int AZIMUT_PIN_1 = 12;//grau
+        private const int AZIMUT_PIN_2 = 16;//violet
+        private const int AZIMUT_PIN_3 = 20;//rot
+        private const int AZIMUT_PIN_4 = 21;//violet
 
         //Azimut stepper motor pins
-        private const int YELLOW_ELEVATION_PIN = 5;//grüen
-        private const int WHITE_ELEVATION_PIN = 6;//brun
-        private const int GREEN_ELEVATION_PIN = 13;//gelb
-        private const int BLUE_ELEVATION_PIN = 19;//blau
+        private const int ELEVATION_PIN_1 = 5;//grüen
+        private const int ELEVATION_PIN_2 = 6;//brun
+        private const int ELEVATION_PIN_3 = 13;//gelb
+        private const int ELEVATION_PIN_4 = 19;//blau
 
 
         public int ElevationAngle { get; private set; }
@@ -28,24 +31,31 @@ namespace Solartracker
 
         public int Revolution { get; private set; }
         public int MoveAngleSteps { get; private set; }
-
+        
+        public StepperMode MotorStepperMode { get; private set; }
+        public short MotorRPM { get; private set; }   
         public Solartracker() 
         {
-            ElevationAngle = 0;
+            // start angle
+            ElevationAngle = 0; 
             AzimutAngle = 0;
+            //Revolution for halfstep
             Revolution = 4096;
+            // steps in degrees for manual move on click
             MoveAngleSteps = 10;
+            MotorStepperMode = StepperMode.HalfStep;
+            MotorRPM = 1;
         }
 
         public void RunManual()
         {
-            using (Uln2003 azimutMotor = new Uln2003(YELLOW_AZIMUT_PIN, WHITE_AZIMUT_PIN, GREEN_AZIMUT_PIN, BLUE_AZIMUT_PIN))
-            using (Uln2003 elevationMotor = new Uln2003(YELLOW_ELEVATION_PIN, WHITE_ELEVATION_PIN, GREEN_ELEVATION_PIN, BLUE_ELEVATION_PIN))
+            using (Uln2003 azimutMotor = new Uln2003(AZIMUT_PIN_1, AZIMUT_PIN_2, AZIMUT_PIN_3, AZIMUT_PIN_4))
+            using (Uln2003 elevationMotor = new Uln2003(ELEVATION_PIN_1, ELEVATION_PIN_2, ELEVATION_PIN_3, ELEVATION_PIN_4))
             {
-                azimutMotor.Mode = StepperMode.HalfStep;
-                elevationMotor.Mode = StepperMode.HalfStep;
-                azimutMotor.RPM = 1;
-                elevationMotor.RPM = 1;
+                azimutMotor.Mode = MotorStepperMode;
+                elevationMotor.Mode = MotorStepperMode;
+                azimutMotor.RPM = MotorRPM;
+                elevationMotor.RPM = MotorRPM;
 
                 bool start = true;
 
@@ -97,25 +107,81 @@ namespace Solartracker
 
         public void RunGPS()
         {
-            using (Uln2003 azimutMotor = new Uln2003(YELLOW_AZIMUT_PIN, WHITE_AZIMUT_PIN, GREEN_AZIMUT_PIN, BLUE_AZIMUT_PIN))
-            using (Uln2003 elevationMotor = new Uln2003(YELLOW_ELEVATION_PIN, WHITE_ELEVATION_PIN, GREEN_ELEVATION_PIN, BLUE_ELEVATION_PIN))
+            using(var gpsPort = new SerialPort("/dev/ttyAMA0"))
+            using (Uln2003 azimutMotor = new Uln2003(AZIMUT_PIN_1, AZIMUT_PIN_2, AZIMUT_PIN_3, AZIMUT_PIN_4))
+            using (Uln2003 elevationMotor = new Uln2003(ELEVATION_PIN_1, ELEVATION_PIN_2, ELEVATION_PIN_3, ELEVATION_PIN_4))
             {
-                elevationMotor.RPM = 1;
-                elevationMotor.Mode = StepperMode.HalfStep;
+                elevationMotor.RPM = MotorRPM;
+                elevationMotor.Mode = MotorStepperMode;
 
-                azimutMotor.RPM = 1;
-                elevationMotor.Mode = StepperMode.HalfStep;
+                azimutMotor.RPM = MotorRPM;
+                elevationMotor.Mode = MotorStepperMode;
 
-                //Breitengrad Rho dezimal Züri
-                double latitude = 47.376887;
-                //Längengrad lambda dezimal Züri
-                double longitude = 8.541694;
 
-                SolarTimes solarTimes = new SolarTimes(DateTime.Now.AddHours(-12), latitude, longitude);
+                gpsPort.NewLine = "\r\n";
+                gpsPort.Open();
 
+                // Device streams continuously and therefore most of the time we would end up in the middle of the line
+                // therefore ignore first line so that we align correctly
+                gpsPort.ReadLine();
+
+                DateTimeOffset lastMessageTime = DateTimeOffset.UtcNow;
+                bool gotRmc = false;
+                while (!gotRmc)
+                {
+                    string line = gpsPort.ReadLine();
+                    TalkerSentence? sentence = TalkerSentence.FromSentenceString(line, out _);
+                    
+                    if (sentence == null)
+                    {
+                        continue;
+                    }
+
+                    object? typed = sentence.TryGetTypedValue(ref lastMessageTime);
+                    if (typed == null)
+                    {
+                        Console.WriteLine($"Sentence identifier `{sentence.Id}` is not known.");
+                    }
+                    else if (typed is RecommendedMinimumNavigationInformation rmc)
+                    {
+                        gotRmc = true;
+
+                        if (rmc.Position.ContainsValidPosition())
+                        {
+                            Console.WriteLine($"location: {rmc.Position}");
+
+                            SolarTimes solarTimes = new SolarTimes(DateTime.Now, rmc.Position.Latitude, rmc.Position.Longitude);
+                            AzimutAngle = SetAngle(azimutMotor, AzimutAngle, solarTimes.SolarAzimuth.Degrees);
+                            ElevationAngle = SetAngle(elevationMotor, ElevationAngle, solarTimes.SolarElevation.Degrees);
+                        }
+                        else
+                        {
+                            Console.WriteLine($"Location not found");
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Sentence of type `{typed.GetType().FullName}` not handled.");
+                    }
+                }              
+            }
+        }
+
+        public void RunGPSDemo(DateTime time, double latitute, double longitude)
+        {
+            using (Uln2003 azimutMotor = new Uln2003(AZIMUT_PIN_1, AZIMUT_PIN_2, AZIMUT_PIN_3, AZIMUT_PIN_4))
+            using (Uln2003 elevationMotor = new Uln2003(ELEVATION_PIN_1, ELEVATION_PIN_2, ELEVATION_PIN_3, ELEVATION_PIN_4))
+            {
+                elevationMotor.RPM = MotorRPM;
+                elevationMotor.Mode = MotorStepperMode;
+
+                azimutMotor.RPM = MotorRPM;
+                elevationMotor.Mode = MotorStepperMode;
+
+                SolarTimes solarTimes = new SolarTimes(time, latitute, longitude);
                 AzimutAngle = SetAngle(azimutMotor, AzimutAngle, solarTimes.SolarAzimuth.Degrees);
-                ElevationAngle = SetAngle(elevationMotor,ElevationAngle, solarTimes.SolarElevation.Degrees);
-                //PARAMS RT, DATUM, ZEIT, Längengrad, Breitengrad                
+                ElevationAngle = SetAngle(elevationMotor, ElevationAngle, solarTimes.SolarElevation.Degrees);
+
             }
         }
 
